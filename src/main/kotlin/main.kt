@@ -31,7 +31,11 @@ fun main(args: Array<String>){
     println("Action: ${action}")
     when {
         "list_fresh_notes".equals(action) -> conspectFiles.forEach(::listFreshNotes)
-        "init_fresh_notes".equals(action) -> conspectFiles.forEach(::updateConspect)
+        "init_fresh_notes".equals(action) -> {
+            val filename=args.getOrNull(2)?: throw IllegalArgumentException("Target conspect should be specified")
+            val targetFile=conspectFiles.firstOrNull{it.name.equals(filename)}?:throw IllegalArgumentException("Conspect ${filename} was not found")
+            updateConspect(targetFile)
+        }
         "list_forgetting_notes".equals(action) -> conspectFiles.forEach(::listForgettingNotes)
         else -> println("Unexpected command: ${action}")
     }

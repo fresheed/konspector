@@ -7,6 +7,7 @@ package org.fresheed.runup;
 import com.orgzly.org.OrgHead
 import initializeNote
 import isFreshNote
+import markReviewed
 import notes
 import readConspect
 import timestamps
@@ -32,11 +33,28 @@ fun main(args: Array<String>){
     when {
         "list_fresh_notes".equals(action) -> conspectFiles.forEach(::listFreshNotes)
         "init_fresh_notes".equals(action) -> {
-            val filename=args.getOrNull(2)?: throw IllegalArgumentException("Target conspect should be specified")
+            if (args.size<3){
+                throw IllegalArgumentException("Conspect name should be specified")
+            }
+            val filename=args[2]
             val targetFile=conspectFiles.firstOrNull{it.name.equals(filename)}?:throw IllegalArgumentException("Conspect ${filename} was not found")
             updateConspect(targetFile)
+            println("Initialized fresh notes in ${filename}")
         }
         "list_forgetting_notes".equals(action) -> conspectFiles.forEach(::listForgettingNotes)
+        "mark_reviewed_note".equals(action) -> {
+            if (args.size<4){
+                throw IllegalArgumentException("Conspect name and note name should be specified")
+            }
+            val filename=args[2]
+            val noteTitle=args[3]
+            val targetFile=conspectFiles.firstOrNull{it.name.equals(filename)}?:throw IllegalArgumentException("Conspect ${filename} was not found")
+            val conspect=readConspect(targetFile)
+            val targetNote=conspect.notes.firstOrNull{it.title.equals(noteTitle)}?:throw IllegalArgumentException("Note ${noteTitle} was not found")
+            markReviewed(targetNote)
+            writeConspect(targetFile, conspect)
+            println("Note '${noteTitle}' (${filename}) reviewed")
+        }
         else -> println("Unexpected command: ${action}")
     }
 }
@@ -60,7 +78,7 @@ private fun listForgettingNotes(conspectFile: File){
     val conspect=readConspect(conspectFile)
     val freshNotes = conspect.notes.filter(::isFreshNote)
     val lastTimestamp={note: OrgHead -> note.timestamps.sorted().last()}
-    val describeNote={note: OrgHead -> "${note.title} (${conspectFile.name}); reviewed ${lastTimestamp(note)}"}
+    val describeNote={note: OrgHead -> "${note.title} (${conspectFile.name}); last reviewed ${lastTimestamp(note)}"}
     if (freshNotes.isNotEmpty()){
         println("${conspectFile.name}: fresh notes exist. Please initialize them before reviewing")
     } else {

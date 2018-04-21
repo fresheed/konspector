@@ -16,13 +16,14 @@ open class ProcessingTests: ConspectTests() {
 
     @Test
     fun processedNoteSkipped() {
-        assertFalse(isFreshNote(parseNote("* hello\n   :PROPERTIES:\n  :REVIEW_DATE:   10\n  :END:")))
+        assertFalse(isFreshNote(parseNote("** hello\n   :PROPERTIES:\n  :NOTE_ID:   123\n  :REVIEW_DATE:   10\n  :END:")))
     }
 
-    @Test
-    fun rootNoteSkipped() {
-        assertFalse(isFreshNote(parseNote("* hello\n   :PROPERTIES:\n  :END:")))
-    }
+//    root heading is not considered a note
+//    @Test
+//    fun rootNoteSkipped() {
+//        assertFalse(isFreshNote(parseNote("* hello\n   :PROPERTIES:\n  :END:")))
+//    }
 
     @Test
     fun freshNoteFound() {

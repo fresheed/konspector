@@ -26,8 +26,7 @@ fun isFreshNote(note: OrgHead): Boolean {
 
 
 fun initializeNote(note: OrgHead) {
-    val currentTime = LocalDateTime.now()
-    note.addProperty(OrgProperty(REVIEW_DATE_PROPERTY, currentTime.format(dateFormat)))
+    markReviewed(note)
     val id= UUID.randomUUID().toString().substring(0, 8)
     note.addProperty(OrgProperty(NOTE_ID_PROPERTY, id))
 }
@@ -35,3 +34,9 @@ fun initializeNote(note: OrgHead) {
 
 val OrgHead.timestamps: List<LocalDateTime>
     get() = properties.filter{it.name.equals(REVIEW_DATE_PROPERTY)}.map{LocalDateTime.parse(it.value, dateFormat)}
+
+
+fun markReviewed(note: OrgHead) {
+    val currentTime = LocalDateTime.now()
+    note.addProperty(OrgProperty(REVIEW_DATE_PROPERTY, currentTime.format(dateFormat)))
+}

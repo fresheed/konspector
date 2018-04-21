@@ -19,8 +19,11 @@ val scanner=IntervalScanner(scale=2)
 
 
 fun main(args: Array<String>){
+    args.
     val directoryPath="./algorithms"
     val conspectFiles=listConspectFiles(listOf(directoryPath))
+    println("Conspects: \n  "+conspectFiles.joinToString(separator = "\n  "))
+
     val action=args.firstOrNull()?:"list_forgetting_notes"
     println(action)
 

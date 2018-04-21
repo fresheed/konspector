@@ -23,15 +23,10 @@ fun main(args: Array<String>){
     println(action)
 
     when {
-        "list_fresh_notes".equals(action) -> {
-            conspectFiles.forEach(::listFreshNotes)
-        }
-        "init_fresh_notes".equals(action) -> {
-            conspectFiles.forEach(::updateConspect)
-        }
-        "list_forgetting_notes".equals(action) -> {
-            conspectFiles.forEach(::listForgettingNotes)
-        }
+        "list_fresh_notes".equals(action) -> conspectFiles.forEach(::listFreshNotes)
+        "init_fresh_notes".equals(action) -> conspectFiles.forEach(::updateConspect)
+        "list_forgetting_notes".equals(action) -> conspectFiles.forEach(::listForgettingNotes)
+        else -> println("Unexpected command: ${action}")
     }
 }
 

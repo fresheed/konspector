@@ -19,14 +19,16 @@ val scanner=IntervalScanner(scale=2)
 
 
 fun main(args: Array<String>){
-    args.
-    val directoryPath="./algorithms"
-    val conspectFiles=listConspectFiles(listOf(directoryPath))
-    println("Conspects: \n  "+conspectFiles.joinToString(separator = "\n  "))
+    if (args.size<2){
+        throw IllegalArgumentException("Path to conspects list and action required as arguments")
+    }
 
-    val action=args.firstOrNull()?:"list_forgetting_notes"
-    println(action)
+    val conspectsPathes=readConspectPathes(args[0])
+    val conspectFiles=listConspectFiles(conspectsPathes)
+    println("Conspects: \n  "+conspectFiles.joinToString(separator = "\n  ")+"\n")
 
+    val action=args[1]
+    println("Action: ${action}")
     when {
         "list_fresh_notes".equals(action) -> conspectFiles.forEach(::listFreshNotes)
         "init_fresh_notes".equals(action) -> conspectFiles.forEach(::updateConspect)
@@ -34,6 +36,7 @@ fun main(args: Array<String>){
         else -> println("Unexpected command: ${action}")
     }
 }
+
 
 private fun listFreshNotes(file: File) {
     val freshNotes=readConspect(file).notes.filter(::isFreshNote)
@@ -64,6 +67,11 @@ private fun listForgettingNotes(conspectFile: File){
             println(message)
         }
     }
+}
+
+
+private fun readConspectPathes(listPath: String): List<String> {
+    return File(listPath).readLines().filter{it.isNotBlank()}
 }
 
 

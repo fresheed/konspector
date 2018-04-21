@@ -4,10 +4,12 @@
 
 package org.fresheed.runup;
 
+import com.orgzly.org.OrgHead
 import initializeNote
 import isFreshNote
 import notes
 import readConspect
+import timestamps
 import writeConspect
 import java.io.File
 import java.time.LocalDateTime
@@ -47,13 +49,15 @@ private fun updateConspect(file: File) {
 private fun listForgettingNotes(conspectFile: File){
     val conspect=readConspect(conspectFile)
     val freshNotes = conspect.notes.filter(::isFreshNote)
+    val lastTimestamp={note: OrgHead -> note.timestamps.sorted().last()}
+    val describeNote={note: OrgHead -> "${note.title} (${conspectFile.name}); reviewed ${lastTimestamp(note)}"}
     if (freshNotes.isNotEmpty()){
         println("${conspectFile.name}: fresh notes exist. Please initialize them before reviewing")
     } else {
         val currentTime = LocalDateTime.now()
         val forgettingNotes=conspect.notes.filter{scanner.shouldReview(it, currentTime)}
         if (forgettingNotes.isNotEmpty()) {
-            val message=forgettingNotes.joinToString(separator="\n"){"${it.title} (${conspectFile.name})"}
+            val message=forgettingNotes.joinToString(separator="\n", transform=describeNote)
             println(message)
         }
     }

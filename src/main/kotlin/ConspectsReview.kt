@@ -35,4 +35,3 @@ fun initializeNote(note: OrgHead) {
 
 val OrgHead.timestamps: List<LocalDateTime>
     get() = properties.filter{it.name.equals(REVIEW_DATE_PROPERTY)}.map{LocalDateTime.parse(it.value, dateFormat)}
-

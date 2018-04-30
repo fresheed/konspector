@@ -4,7 +4,9 @@
 
 package org.fresheed.runup;
 
+import NOTE_ID_PROPERTY
 import com.orgzly.org.OrgHead
+import id
 import initializeNote
 import isFreshNote
 import markReviewed
@@ -47,13 +49,17 @@ fun main(args: Array<String>){
                 throw IllegalArgumentException("Conspect name and note name should be specified")
             }
             val filename=args[2]
-            val noteTitle=args[3]
+            val noteIds=args[3].split(",")
             val targetFile=conspectFiles.firstOrNull{it.name.equals(filename)}?:throw IllegalArgumentException("Conspect ${filename} was not found")
             val conspect=readConspect(targetFile)
-            val targetNote=conspect.notes.firstOrNull{it.title.equals(noteTitle)}?:throw IllegalArgumentException("Note ${noteTitle} was not found")
-            markReviewed(targetNote)
+            val targetNotes=conspect.notes.filter{note -> noteIds.any{it.equals(note.id)}}
+            if (targetNotes.size!=noteIds.size) {
+                throw IllegalArgumentException("Some IDs are unknown")
+            }
+            targetNotes.forEach(::markReviewed)
             writeConspect(targetFile, conspect)
-            println("Note '${noteTitle}' (${filename}) reviewed")
+            //println("Note '${noteTitle}' (${filename}) reviewed")
+            println("Reviewed notes:\n  ${targetNotes.map{it.title}.joinToString(separator="\n  ")}")
         }
         else -> println("Unexpected command: ${action}")
     }
@@ -78,7 +84,7 @@ private fun listForgettingNotes(conspectFile: File){
     val conspect=readConspect(conspectFile)
     val freshNotes = conspect.notes.filter(::isFreshNote)
     val lastTimestamp={note: OrgHead -> note.timestamps.sorted().last()}
-    val describeNote={note: OrgHead -> "${note.title} (${conspectFile.name}); last reviewed ${lastTimestamp(note)}"}
+    val describeNote={note: OrgHead -> "${note.title} (${conspectFile.name}); id ${note.id}, last reviewed ${lastTimestamp(note)}"}
     if (freshNotes.isNotEmpty()){
         println("${conspectFile.name}: fresh notes exist. Please initialize them before reviewing")
     } else {

@@ -35,6 +35,10 @@ fun initializeNote(note: OrgHead) {
 val OrgHead.timestamps: List<LocalDateTime>
     get() = properties.filter{it.name.equals(REVIEW_DATE_PROPERTY)}.map{LocalDateTime.parse(it.value, dateFormat)}
 
+val OrgHead.id: String
+    get() = properties.firstOrNull{it.name.equals(NOTE_ID_PROPERTY)}?.value?:throw RuntimeException("f00")
+
+
 
 fun markReviewed(note: OrgHead) {
     val currentTime = LocalDateTime.now()

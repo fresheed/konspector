@@ -49,12 +49,18 @@ fun main(args: Array<String>){
                 throw IllegalArgumentException("Conspect name and note name should be specified")
             }
             val filename=args[2]
-            val noteIds=args[3].split(",")
             val targetFile=conspectFiles.firstOrNull{it.name.equals(filename)}?:throw IllegalArgumentException("Conspect ${filename} was not found")
             val conspect=readConspect(targetFile)
-            val targetNotes=conspect.notes.filter{note -> noteIds.any{it.equals(note.id)}}
-            if (targetNotes.size!=noteIds.size) {
-                throw IllegalArgumentException("Some IDs are unknown")
+            val targetNotes=if (args[3].equals("ALL")){
+                conspect.notes.filter(::shouldReviewNow)
+            } else {
+                val noteIds=args[3].split(",")
+                val tNs=conspect.notes.filter{note -> noteIds.any{it.equals(note.id)}}
+                if (tNs.size==noteIds.size) {
+                    tNs
+                } else {
+                    throw IllegalArgumentException("Some IDs are unknown")
+                }
             }
             targetNotes.forEach(::markReviewed)
             writeConspect(targetFile, conspect)
@@ -80,21 +86,31 @@ private fun updateConspect(file: File) {
 }
 
 
-private fun listForgettingNotes(conspectFile: File){
-    val conspect=readConspect(conspectFile)
-    val freshNotes = conspect.notes.filter(::isFreshNote)
-    val lastTimestamp={note: OrgHead -> note.timestamps.sorted().last()}
-    val describeNote={note: OrgHead -> "${note.title} (${conspectFile.name}); id ${note.id}, last reviewed ${lastTimestamp(note)}"}
-    if (freshNotes.isNotEmpty()){
-        println("${conspectFile.name}: fresh notes exist. Please initialize them before reviewing")
+private fun listForgettingNotes(conspectFile: File) {
+    val conspect = readConspect(conspectFile)
+    val (freshNotes, reviewedNotes) = conspect.notes.partition(::isFreshNote)
+    val lastTimestamp = { note: OrgHead -> note.timestamps.sorted().last() }
+    val describeNote = { note: OrgHead -> "${note.title} (${conspectFile.name}); id ${note.id}, last reviewed ${lastTimestamp(note)}" }
+    if (freshNotes.isNotEmpty()) {
+        val message = "${conspectFile.name}: " + if (reviewedNotes.isNotEmpty()) {
+            "fresh notes exist. Please initialize them before reviewing"
+        } else {
+            "conspect is not initialized yet"
+        }
+        println(message)
     } else {
-        val currentTime = LocalDateTime.now()
-        val forgettingNotes=conspect.notes.filter{scanner.shouldReview(it, currentTime)}
+        val forgettingNotes = conspect.notes.filter(::shouldReviewNow)
         if (forgettingNotes.isNotEmpty()) {
-            val message=forgettingNotes.joinToString(separator="\n", transform=describeNote)
+            val message = forgettingNotes.joinToString(separator = "\n", transform = describeNote)
             println(message)
         }
     }
+}
+
+
+private fun shouldReviewNow(note: OrgHead): Boolean {
+    val currentTime = LocalDateTime.now()
+    return scanner.shouldReview(note, currentTime)
 }
 
 

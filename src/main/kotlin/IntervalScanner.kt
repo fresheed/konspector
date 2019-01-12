@@ -25,7 +25,7 @@ class IntervalScanner(val scale: Int) {
             val reviewAt=latestRepetition+newInterval
             return currentTime>=reviewAt
         } else {
-            throw MalformedNoteException("WIP")
+            throw MalformedNoteException("WIP (${note.title})")
         }
     }
 }

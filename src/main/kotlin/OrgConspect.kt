@@ -9,7 +9,7 @@ import java.io.FileReader
  * Created by fresheed on 20.04.18.
  */
 
-fun getParserBuilder() = OrgParser.Builder()
+fun getParserBuilder() = OrgParser.Builder().setTodoKeywords(arrayOf("TODO"))
 
 
 val OrgParsedFile.notes: List<OrgHead>

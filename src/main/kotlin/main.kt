@@ -26,8 +26,10 @@ fun main(args: Array<String>){
         throw IllegalArgumentException("Path to conspects list and action required as arguments")
     }
 
-    val conspectsPathes=readConspectPathes(args[0])
-    val conspectFiles=listConspectFiles(conspectsPathes)
+    val allPathes=readConspectPathes(args[0])
+    val allFiles=listConspectFiles(allPathes)
+    val (conspectFiles, ignoredFiles)=allFiles.partition{!it.name.startsWith("_")}
+    println("Ignored pathes: "+ignoredFiles.joinToString(separator = ", "))
     println("Conspects: \n  "+conspectFiles.joinToString(separator = "\n  ")+"\n")
 
     val action=args[1]
@@ -52,12 +54,11 @@ fun main(args: Array<String>){
             val conspect=readConspect(targetFile)
             val conspectNotes=conspect.notes.filterNot{isFreshNote(it) || "TODO".equals(it.state)}
             val targetNotes=if (args[3].equals("ALL")){
-                //conspect.notes.filter(::shouldReviewNow)
                 conspectNotes.filter(::shouldReviewNow)
             } else {
                 val noteIds=args[3].split(",")
                 val tNs=conspectNotes.filter{note -> noteIds.any{it.equals(note.id)}}
-                if (tNs.size==noteIds.size) {
+                if (tNs.size!=noteIds.size) {
                     tNs
                 } else {
                     throw IllegalArgumentException("Some IDs are unknown")
@@ -65,7 +66,6 @@ fun main(args: Array<String>){
             }
             targetNotes.forEach(::markReviewed)
             writeConspect(targetFile, conspect)
-            //println("Note '${noteTitle}' (${filename}) reviewed")
             println("Reviewed notes:\n  ${targetNotes.map{it.title}.joinToString(separator="\n  ")}")
         }
         else -> println("Unexpected command: ${action}")

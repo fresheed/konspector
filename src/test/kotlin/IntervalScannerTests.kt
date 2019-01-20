@@ -8,58 +8,51 @@ import ConspectTests
 import com.orgzly.org.OrgHead
 import dateFormat
 import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.function.Executable
-import java.time.Duration
 import java.time.LocalDateTime
-import java.time.temporal.TemporalAmount
 
 /**
  * Created by fresheed on 14.01.18.
  */
 class IntervalScannerTests: ConspectTests() {
-    private val time=LocalDateTime.parse("2018-04-02 12:00", dateFormat)
+    private val currentTime =LocalDateTime.parse("2018-04-02 12:00", dateFormat)
     private val scanner=IntervalScanner(scale=2)
+
+    private fun checkScanner(expected: Boolean, note: OrgHead) = assert(scanner.shouldReview(note, currentTime) == expected)
 
     @Test
     fun timestampsRequired() {
         val note=makeRepeatedNote(emptyList<String>())
-        assertThrows<MalformedNoteException>(MalformedNoteException::class.java, { scanner.shouldReview(note, time) })
+        assertThrows<MalformedNoteException>(MalformedNoteException::class.java, { scanner.shouldReview(note, currentTime) })
     }
 
     @Test
-    fun freshNoteDetected() {
-        val note=makeRepeatedNote(listOf("2018-04-01 12:00"))
-        assertTrue(scanner.shouldReview(note, time))
+    fun freshForgettingNoteDetected() {
+        checkScanner(true, makeRepeatedNote(listOf("2018-04-01 12:00")))
     }
 
     @Test
-    fun recentNoteSkipped() {
-        val note=makeRepeatedNote(listOf("2018-04-01 13:00"))
-        assertFalse(scanner.shouldReview(note, time))
+    fun freshRecentNoteSkipped() {
+        checkScanner(false, makeRepeatedNote(listOf("2018-04-01 13:00")))
     }
 
     @Test
-    fun stableNoteSkipped() {
-        val note=makeRepeatedNote(listOf("2018-03-31 12:00", "2018-04-01 12:00"))
-        assertFalse(scanner.shouldReview(note, time))
+    fun oldForgettingNoteDetected() {
+        checkScanner(true, makeRepeatedNote(listOf("2018-03-30 12:00", "2018-03-31 12:00")))
     }
 
     @Test
-    fun forgettingNoteDetected() {
-        val note=makeRepeatedNote(listOf("2018-04-01 01:00", "2018-04-01 12:00"))
-        assertTrue(scanner.shouldReview(note, time))
+    fun oldRecentNoteSkipped() {
+        checkScanner(false, makeRepeatedNote(listOf("2018-03-30 12:01", "2018-03-31 12:01")))
     }
 
     @Test
-    fun onlyLatestIntervalProcessed() {
-        val note=makeRepeatedNote(listOf("2018-04-01 01:00", "2018-03-31 12:00", "2018-04-01 12:00"))
-        assertTrue(scanner.shouldReview(note, time))
+    fun exactlyExtendedPassedIntervalDetected() {
+        checkScanner(true, makeRepeatedNote(listOf("2018-03-01 01:00", "2018-03-31 11:59")))
     }
 
     @Test
-    fun checkExport() {
-        val note=parseContent("*** hello\n   :PROPERTIES:\n   :FOO:   bar\n  :END:")
-        println(note.toString())
+    fun exactlyExtendedCurrentIntervalSkipped() {
+        checkScanner(false, makeRepeatedNote(listOf("2018-03-01 01:00", "2018-03-31 12:01")))
     }
 
     private fun makeRepeatedNote(repetitions: List<String>): OrgHead {

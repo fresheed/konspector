@@ -25,17 +25,21 @@ fun main(args: Array<String>) {
     val allPathes = readConspectPathes(conspectsPath)
     val allFiles = listConspectFiles(allPathes)
     val (conspectFiles, ignoredFiles) = allFiles.partition { !it.name.startsWith("_") }
-    println("Ignored pathes: " + ignoredFiles.joinToString(separator = ", "))
-    println("Conspects: \n  " + conspectFiles.joinToString(separator = "\n  ") + "\n")
 
     val action = getRequiredArg(args, 1, "action")
     println("Action: ${action}")
     when (action) {
+        "info" -> showInfo(conspectFiles, ignoredFiles)
         "init_fresh_notes" -> initFreshNotes(args, conspectFiles)
         "list_forgetting_notes" -> listForgettingNotes(conspectFiles)
         "mark_reviewed_note" -> markReviewedNotes(args, conspectFiles)
         else -> println("Unexpected command: ${action}")
     }
+}
+
+fun showInfo(conspectFiles: List<File>, ignoredFiles: List<File>) {
+    println("Ignored pathes: " + ignoredFiles.joinToString(separator = "\n  ") + "\n")
+    println("Conspects: \n  " + conspectFiles.joinToString(separator = "\n  ") + "\n")
 }
 
 private fun markReviewedNotes(args: Array<String>, conspectFiles: List<File>) {
@@ -49,7 +53,7 @@ private fun markReviewedNotes(args: Array<String>, conspectFiles: List<File>) {
     } else {
         val noteIds = notesIds.split(",")
         val tNs = conspectNotes.filter { note -> noteIds.any { it.equals(note.id) } }
-        if (tNs.size != noteIds.size) {
+        if (tNs.size == noteIds.size) {
             tNs
         } else {
             throw IllegalArgumentException("Some IDs are unknown")
@@ -65,11 +69,11 @@ private fun listForgettingNotes(conspectFiles: List<File>) {
         val conspect = readConspect(conspectFile)
         val lastTimestamp = { note: OrgHead -> note.timestamps.sorted().last() }
         val describeNote = { note: OrgHead -> "${note.title} (${conspectFile.name}); id ${note.id}, last reviewed ${lastTimestamp(note)}" }
-        val incompleteNotes = conspect.notes.filter { "TODO".equals(it.state) }
+        val (readyNotes, incompleteNotes) = conspect.notes.partition { !"TODO".equals(it.state) }
         if (incompleteNotes.isNotEmpty()) {
             println("${conspectFile.name}: some notes are incomplete: ${incompleteNotes.joinToString(", ")}")
         }
-        val (freshNotes, reviewedNotes) = conspect.notes.partition(::isFreshNote)
+        val (freshNotes, reviewedNotes) = readyNotes.partition(::isFreshNote)
         if (reviewedNotes.isNotEmpty()) {
             val forgettingNotes = reviewedNotes.filter(::shouldReviewNow)
             if (forgettingNotes.isNotEmpty()) {
